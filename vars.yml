@@ -1,7 +1,0 @@
-# ansible_python_interpreter: /home/supan/projects/venv/bin/python
-google_project_id: utopian-pen-473309-t1
-service_account_path: /home/supan/utopian-pen-473309-t1-27cccb013993.json
-ssh_public_key_path: /home/supan/.ssh/id_ed25519.pub
-ssh_private_key_path: /home/supan/.ssh/id_ed25519
-
-certbot_email: "xxsupan11@gmail.com"

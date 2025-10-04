@@ -9,7 +9,7 @@
 *.retry
 .DS_Store
 Thumbs.db
-./vars.yml
+vars.yml
 
 # ---------------------------
 # Python Virtual Environments
