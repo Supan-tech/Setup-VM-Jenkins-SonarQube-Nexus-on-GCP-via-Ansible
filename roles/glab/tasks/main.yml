@@ -1,0 +1,6 @@
+---
+- name: Install GitLab CLI (glab)
+  shell: |
+    curl -s https://raw.githubusercontent.com/profclems/glab/trunk/scripts/install.sh | sudo bash
+  args:
+    creates: /usr/local/bin/glab

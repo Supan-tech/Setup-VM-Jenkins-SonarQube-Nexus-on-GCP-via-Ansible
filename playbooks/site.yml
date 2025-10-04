@@ -1,0 +1,72 @@
+- name: Create GCP instance
+  hosts: localhost
+  become: yes
+  vars_files:
+    - ../vars.yml
+  vars:
+    ansible_python_interpreter: /home/supan/projects/venv/bin/python
+  roles:
+    - create_instances
+
+- name: Add hosts to inventory dynamically
+  hosts: localhost
+  become: yes
+  vars_files:
+    - ../vars.yml
+  vars:
+    ansible_python_interpreter: /home/supan/projects/venv/bin/python
+    instances:
+      - { ip: "{{ gcp_instance_ips[0] }}", group: Jenkins }
+      - { ip: "{{ gcp_instance_ips[1] }}", group: SonarQube }
+      - { ip: "{{ gcp_instance_ips[2] }}", group: Nexus }
+  tasks:
+    - name: Add each host dynamically
+      add_host:
+        name: "{{ item.ip }}"
+        groups: "{{ item.group }}"
+        ansible_user: supan
+        ansible_ssh_private_key_file: /home/supan/.ssh/id_ed25519
+        ansible_python_interpreter: /usr/bin/python3
+      loop: "{{ instances }}"
+
+# - name: Configure Jenkins host
+#   hosts: Jenkins
+#   become: yes
+#   vars_files:
+#     - ../vars.yml
+#   vars:
+#     ansible_python_interpreter: /usr/bin/python3
+#     domain_name: "jenkins.supan.online"
+#   roles:
+#     - common
+#     # - docker
+#     # - glab
+#     # - portainer
+#     # - ansible
+#     - jenkins
+#     - nginx_for_jenkins
+#     - certbot
+
+- name: Configure Sonarqube host
+  hosts: SonarQube
+  become: yes
+  vars_files:
+    - ../vars.yml
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    domain_name: "sonarqube.supan.online"
+    sonar_compose_dir: /opt/sonarqube-docker
+    sonar_version: "10.6-community"
+    postgres_version: "15"
+    postgres_user: "sonar"
+    postgres_password: "sonar"
+    postgres_db: "sonar"
+  roles:
+    - common
+    - docker
+    # - glab
+    # - portainer
+    # - ansible
+    - sonarqube
+    - nginx_for_sonarqube
+    - certbot

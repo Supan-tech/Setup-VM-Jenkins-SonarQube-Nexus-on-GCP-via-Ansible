@@ -1,0 +1,8 @@
+- name: Slurp SSH public key
+  include_tasks: slurp_ssh.yml
+
+- name: Create GCP instances
+  include_tasks: create_instances.yml
+
+- name: Update inventory file
+  include_tasks: update_inventory.yml

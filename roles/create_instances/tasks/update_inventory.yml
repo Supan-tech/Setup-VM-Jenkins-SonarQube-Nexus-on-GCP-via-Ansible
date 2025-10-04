@@ -1,0 +1,52 @@
+# - name: Append GCP instances to inventory
+#   blockinfile:
+#     path: /home/supan/projects/testing/inventory/hosts.ini
+#     create: yes
+#     block: |
+#       {% for group in instance_groups.keys() %}
+#       [{{ group }}]
+#       {% for inst in gcp_instance.results %}
+#       {% for name in instance_groups[group] %}
+#       {% if inst.name == name %}
+#       {{ inst.networkInterfaces[0].accessConfigs[0].natIP }} ansible_user=supan ansible_ssh_private_key_file={{ ssh_private_key_path }}
+#       {% endif %}
+#       {% endfor %}
+#       {% endfor %}
+#       {% endfor %}
+#   when: gcp_instance is defined
+---
+# roles/create_instances/tasks/update_inventory.yml
+
+- name: Collect GCP instance IPs into array
+  set_fact:
+    gcp_instance_ips: >-
+      {{ gcp_instance.results
+         | map(attribute='networkInterfaces')
+         | map('first')
+         | map(attribute='accessConfigs')
+         | map('first')
+         | map(attribute='natIP')
+         | list }}
+  when: gcp_instance is defined
+
+- name: Debug collected IPs (for clarity)
+  debug:
+    var: gcp_instance_ips
+  when: gcp_instance is defined
+
+- name: Append GCP instances to inventory
+  blockinfile:
+    path: /home/supan/projects/testing/inventory/hosts.ini
+    create: yes
+    block: |
+      {% for group in instance_groups.keys() %}
+      [{{ group }}]
+      {% for inst in gcp_instance.results %}
+      {% for name in instance_groups[group] %}
+      {% if inst.name == name %}
+      {{ inst.networkInterfaces[0].accessConfigs[0].natIP }} ansible_user=supan ansible_ssh_private_key_file={{ ssh_private_key_path }}
+      {% endif %}
+      {% endfor %}
+      {% endfor %}
+      {% endfor %}
+  when: gcp_instance is defined

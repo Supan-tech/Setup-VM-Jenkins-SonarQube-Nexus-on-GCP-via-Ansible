@@ -1,0 +1,61 @@
+# ---------------------------
+# General
+# ---------------------------
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.retry
+.DS_Store
+Thumbs.db
+./vars.yml
+
+# ---------------------------
+# Python Virtual Environments
+# ---------------------------
+venv/
+env/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# ---------------------------
+# Ansible Cache & Facts
+# ---------------------------
+*.facts
+*.retry
+*.out
+*.tar.gz
+*.zip
+*.gz
+*.log
+.cache/
+.ansible/
+*.pid
+
+# ---------------------------
+# SSH and Secrets
+# ---------------------------
+*.pem
+*.key
+*.crt
+*.pub
+*.enc
+*.json        # ← this will exclude your service account file (important!)
+secrets.yml
+vault_pass.txt
+
+# ---------------------------
+# Editor/IDE files
+# ---------------------------
+.vscode/
+.idea/
+*.code-workspace
+
+# ---------------------------
+# System Files
+# ---------------------------
+*.bak
+*~

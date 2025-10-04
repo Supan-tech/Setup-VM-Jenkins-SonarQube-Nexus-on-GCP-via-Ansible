@@ -1,0 +1,38 @@
+- name: Create GCP instances
+  google.cloud.gcp_compute_instance:
+    name: "{{ item.1 }}"
+    machine_type: "{{ machine_type }}"
+    zone: "{{ zone }}"
+    project: "{{ google_project_id }}"
+    auth_kind: "serviceaccount"
+    service_account_file: "{{ service_account_path }}"
+    state: present
+    metadata:
+      ssh-keys: "supan:{{ ssh_pub_key['content'] | b64decode }}"
+      startup-script: |
+        #!/bin/bash
+        sudo apt-get update && sudo apt-get upgrade -y
+    disks:
+      - auto_delete: true
+        boot: true
+        initialize_params:
+          source_image: "{{ source_image }}"
+          disk_size_gb: "{{ disk_size_gb }}"
+          disk_type: "{{ disk_type }}"
+    network_interfaces:
+      - network:
+          selfLink: "projects/{{ google_project_id }}/global/networks/{{ network_name }}"
+        access_configs:
+          - name: External NAT
+            type: ONE_TO_ONE_NAT
+    tags:
+      items: "{{ tags }}"
+  loop: "{{ instance_groups | dict2items | subelements('value') }}"
+  loop_control:
+    label: "{{ item.1 }}"
+  register: gcp_instance
+
+- name: Write GCP instance results to JSON
+  copy:
+    content: "{{ gcp_instance }}"
+    dest: "../gcp_instance.json"

@@ -1,0 +1,54 @@
+---
+- name: Create SonarQube Docker directory
+  file:
+    path: "{{ sonar_compose_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy docker-compose.yml for SonarQube
+  copy:
+    dest: "{{ sonar_compose_dir }}/docker-compose.yml"
+    content: |
+      version: "3.9"
+
+      services:
+        sonarqube:
+          image: sonarqube:{{ sonar_version }}
+          container_name: sonarqube
+          restart: unless-stopped
+          depends_on:
+            - db
+          ports:
+            - "9000:9000"
+          environment:
+            SONAR_JDBC_URL: jdbc:postgresql://db:5432/{{ postgres_db }}
+            SONAR_JDBC_USERNAME: {{ postgres_user }}
+            SONAR_JDBC_PASSWORD: {{ postgres_password }}
+            SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+          volumes:
+            - sonarqube_data:/opt/sonarqube/data
+            - sonarqube_extensions:/opt/sonarqube/extensions
+            - sonarqube_logs:/opt/sonarqube/logs
+
+        db:
+          image: postgres:{{ postgres_version }}
+          container_name: sonarqube_db
+          restart: unless-stopped
+          environment:
+            POSTGRES_USER: {{ postgres_user }}
+            POSTGRES_PASSWORD: {{ postgres_password }}
+            POSTGRES_DB: {{ postgres_db }}
+          volumes:
+            - postgresql_data:/var/lib/postgresql/data
+
+      volumes:
+        sonarqube_data:
+        sonarqube_extensions:
+        sonarqube_logs:
+        postgresql_data:
+
+- name: Start SonarQube with Docker Compose
+  command:
+    cmd: docker compose up -d
+    chdir: "{{ sonar_compose_dir }}"
+

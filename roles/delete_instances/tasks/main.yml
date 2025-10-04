@@ -1,0 +1,5 @@
+- name: Slurp SSH public key
+  include_tasks: slurp_ssh.yml
+- name: Delete GCP instances
+  include_tasks: delete_instances.yml
+

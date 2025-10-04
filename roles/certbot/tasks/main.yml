@@ -1,0 +1,19 @@
+---
+- name: Remove old certbot packages
+  apt:
+    name:
+      - certbot
+      - python3-certbot-nginx
+    state: absent
+
+- name: Install certbot with snap
+  snap:
+    name: certbot
+    classic: yes
+
+- name: Obtain Let's Encrypt SSL cert
+  command: >
+    certbot --nginx -d {{ domain_name }} --non-interactive --agree-tos
+    -m {{ certbot_email }}
+  args:
+    creates: "/etc/letsencrypt/live/{{ domain_name }}/fullchain.pem"

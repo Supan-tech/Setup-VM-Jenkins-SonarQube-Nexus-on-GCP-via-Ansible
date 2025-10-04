@@ -1,0 +1,4 @@
+- name: Slurp the local public key
+  slurp:
+    src: "{{ ssh_public_key_path }}"
+  register: ssh_pub_key

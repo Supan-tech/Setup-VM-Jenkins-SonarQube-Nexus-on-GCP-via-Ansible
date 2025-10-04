@@ -1,0 +1,22 @@
+---
+- name: Update apt packages
+  apt:
+    update_cache: yes
+    upgrade: dist
+  retries: 10
+  delay: 30
+  until: result is succeeded
+  register: result
+
+- name: Install zsh
+  apt:
+    name: zsh 
+    state: present
+
+- name: Install Oh My Zsh
+  become: false
+  shell: |
+    RUNZSH=no CHSH=no KEEP_ZSHRC=yes \
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  args:
+    creates: "{{ ansible_env.HOME }}/.oh-my-zsh"
