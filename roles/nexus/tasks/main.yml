@@ -1,0 +1,101 @@
+---
+- name: Create Nexus Docker directory
+  file:
+    path: "{{ nexus_compose_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy docker-compose.yml for Nexus
+  copy:
+    dest: "{{ nexus_compose_dir }}/docker-compose.yml"
+    content: |
+      version: "3.9"
+      services:
+        nexus:
+          image: sonatype/nexus3:{{ nexus_version }}
+          container_name: nexus
+          restart: unless-stopped
+          ports:
+            - "8081:8081"        # Web UI
+            - "5001:5000"        # Docker registry
+          volumes:
+            - nexus-data:/nexus-data
+          environment:
+            INSTALL4J_ADD_VM_PARAMS: >-
+              -Xms1200m -Xmx1200m
+              -XX:MaxDirectMemorySize=2G
+              -Djava.util.prefs.userRoot=/nexus-data/javaprefs
+
+      volumes:
+        nexus-data:
+
+- name: Start Nexus with Docker Compose
+  command:
+    cmd: docker compose up -d
+    chdir: "{{ nexus_compose_dir }}"
+
+- name: Wait for Nexus service to become available
+  uri:
+    url: "http://localhost:8081/service/rest/v1/status"
+    method: GET
+    status_code: 200
+  register: nexus_status
+  until: nexus_status.status == 200
+  retries: 30
+  delay: 10
+
+# --- Repository Setup Section ---
+# Default admin credentials: admin / admin123 (until first login change)
+# For production, consider updating password via API or Ansible variable.
+
+- name: Get Nexus initial admin password
+  command: docker exec nexus cat /nexus-data/admin.password
+  register: nexus_admin_password_raw
+
+- name: Set Nexus admin password fact
+  set_fact:
+    nexus_admin_password: "{{ nexus_admin_password_raw.stdout }}"
+
+- name: Create Docker hosted repository
+  uri:
+    url: "http://localhost:8081/service/rest/v1/repositories/docker/hosted"
+    method: POST
+    user: admin
+    password: "{{ nexus_admin_password | default('admin123') }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      name: "docker-hosted"
+      online: true
+      storage:
+        blobStoreName: "default"
+        strictContentTypeValidation: true
+        writePolicy: "ALLOW"
+      docker:
+        v1Enabled: false
+        forceBasicAuth: true
+        httpPort: 5000
+        hosted:
+          dockerApiVersion: "V2"
+    status_code: [201, 400]   # 400 means repo already exists
+
+- name: Create Helm hosted repository
+  uri:
+    url: "http://localhost:8081/service/rest/v1/repositories/helm/hosted"
+    method: POST
+    user: admin
+    password: "{{ nexus_admin_password | default('admin123') }}"
+    force_basic_auth: yes
+    headers:
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      name: "helm-hosted"
+      online: true
+      storage:
+        blobStoreName: "default"
+        strictContentTypeValidation: true
+        writePolicy: "ALLOW"
+    status_code: [201, 400]

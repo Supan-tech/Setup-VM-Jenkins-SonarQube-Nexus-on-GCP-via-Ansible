@@ -29,23 +29,23 @@
         ansible_python_interpreter: /usr/bin/python3
       loop: "{{ instances }}"
 
-# - name: Configure Jenkins host
-#   hosts: Jenkins
-#   become: yes
-#   vars_files:
-#     - ../vars.yml
-#   vars:
-#     ansible_python_interpreter: /usr/bin/python3
-#     domain_name: "jenkins.supan.online"
-#   roles:
-#     - common
-#     # - docker
-#     # - glab
-#     # - portainer
-#     # - ansible
-#     - jenkins
-#     - nginx_for_jenkins
-#     - certbot
+- name: Configure Jenkins host
+  hosts: Jenkins
+  become: yes
+  vars_files:
+    - ../vars.yml
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    domain_name: "jenkins.supan.online"
+  roles:
+    - common
+    - docker
+    - glab
+    - portainer
+    - ansible
+    - jenkins
+    - nginx_for_jenkins
+    - certbot
 
 - name: Configure Sonarqube host
   hosts: SonarQube
@@ -64,9 +64,28 @@
   roles:
     - common
     - docker
-    # - glab
-    # - portainer
-    # - ansible
+    - portainer
     - sonarqube
     - nginx_for_sonarqube
     - certbot
+
+
+- name: Configure Nexus host
+  hosts: Nexus
+  become: yes
+  vars_files:
+    - ../vars.yml
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    domain_name: "nexus.supan.online"
+    nexus_compose_dir: /opt/nexus
+    nexus_version: "3.68.0"
+    nexus_admin_password: "admin123"
+  roles:
+    - common
+    - docker
+    - portainer
+    - nexus
+    - nginx_for_nexus
+    - certbot
+

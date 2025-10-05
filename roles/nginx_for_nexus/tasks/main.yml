@@ -1,0 +1,64 @@
+---
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Configure Nginx reverse proxy for Nexus
+  copy:
+    dest: /etc/nginx/sites-available/nexus.conf
+    content: |
+      # --------------------------------------------------------
+      # Nexus Repository Manager Reverse Proxy Configuration
+      # --------------------------------------------------------
+      server {
+          listen 80;
+          server_name {{ domain_name }};
+
+          # --- Nexus Web UI ---
+          location / {
+              proxy_pass http://localhost:8081;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+          }
+      }
+
+      # --- Docker Registry (port 5000) ---
+      server {
+          listen 5000;
+          server_name {{ domain_name }};
+
+          location / {
+              proxy_pass http://localhost:5001;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+
+              client_max_body_size 0;
+              chunked_transfer_encoding on;
+          }
+      }
+
+
+- name: Enable Nexus site
+  file:
+    src: /etc/nginx/sites-available/nexus.conf
+    dest: /etc/nginx/sites-enabled/nexus.conf
+    state: link
+
+- name: Remove default Nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Test Nginx configuration
+  command: nginx -t
+
+- name: Restart Nginx
+  service:
+    name: nginx
+    state: restarted
